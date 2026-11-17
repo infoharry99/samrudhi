@@ -16,6 +16,20 @@
             </div>
 
             <div class="flex items-center gap-2">
+                <!-- PWA Action Buttons -->
+                <button type="button" data-pwa-action="install" class="pwa-install-btn flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow transition">
+                    <i class="fa-solid fa-download text-[11px]"></i>
+                    <span>App</span>
+                </button>
+                <button type="button" data-pwa-action="open" class="pwa-open-btn flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/25 text-white font-semibold text-xs border border-white/20 transition">
+                    <i class="fa-solid fa-mobile-screen text-[11px]"></i>
+                    <span>Open</span>
+                </button>
+                <span class="pwa-standalone-badge hidden items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 font-bold text-[10px] border border-emerald-400/30">
+                    <i class="fa-solid fa-circle-check text-[10px]"></i>
+                    <span>App Mode</span>
+                </span>
+
                 <a href="{{ route('member.profile') }}" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-xs text-white transition">
                     <i class="fa-solid fa-circle-user text-amber-400"></i>
                     <span class="font-medium max-w-[80px] truncate">{{ explode(' ', auth()->user()->name)[0] }}</span>

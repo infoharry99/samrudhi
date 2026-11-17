@@ -4,20 +4,41 @@
 
 @section('content')
 <div class="space-y-4">
-    <!-- PWA Install Banner (Mobile App Feel) -->
-    <div id="pwa-install-card" class="bg-gradient-to-r from-indigo-900 to-brand-900 text-white p-3.5 rounded-2xl shadow-sm flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-amber-400 text-slate-900 flex items-center justify-center font-bold text-base shadow shrink-0">
-                <i class="fa-solid fa-mobile-screen"></i>
+    <!-- PWA Install & Open App Banner -->
+    <div id="pwa-install-card" class="pwa-install-banner bg-gradient-to-r from-indigo-900 via-brand-900 to-indigo-950 text-white p-3.5 rounded-2xl shadow-lg border border-indigo-700/40 relative">
+        <button onclick="dismissPwaBanner()" class="absolute top-2.5 right-2.5 text-white/50 hover:text-white p-1 text-xs">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pr-6 sm:pr-0">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-400 text-slate-900 flex items-center justify-center font-bold text-lg shadow shrink-0">
+                    <i class="fa-solid fa-mobile-screen"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <p class="text-xs font-bold leading-tight">Shri Samruddhi PWA App</p>
+                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-400/20 text-amber-300">Fast & Offline</span>
+                    </div>
+                    <p class="text-[10px] text-slate-300 mt-0.5">Install on mobile or desktop for 1-tap passbook & instant receipts</p>
+                </div>
             </div>
-            <div>
-                <p class="text-xs font-bold leading-tight">Install Samruddhi App</p>
-                <p class="text-[10px] text-slate-300">Add to home screen for 1-tap passbook access</p>
+
+            <div class="flex items-center gap-2">
+                <button type="button" data-pwa-action="install" class="pwa-install-btn px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-download"></i>
+                    <span>Install App</span>
+                </button>
+                <button type="button" data-pwa-action="open" class="pwa-open-btn px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-semibold text-xs border border-white/20 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    <span>Open App</span>
+                </button>
+                <span class="pwa-standalone-badge hidden px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-xs font-bold items-center gap-1">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>App Mode</span>
+                </span>
             </div>
         </div>
-        <button onclick="alert('Tap the browser menu (⋮ or Share) and select Add to Home Screen to install the native app experience!')" class="px-2.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-[11px] shadow transition shrink-0">
-            Install
-        </button>
     </div>
 
     <!-- Monthly Collection Due Card (If pending dues exist) -->

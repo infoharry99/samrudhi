@@ -120,12 +120,40 @@
             </div>
         </div>
 
-        <!-- PWA Install Prompt Info -->
-        <div class="mt-6 text-center text-xs text-slate-400">
-            <p class="flex items-center justify-center gap-2">
-                <i class="fa-solid fa-mobile-screen text-amber-400"></i>
-                <span>Install as PWA App on your phone for full app experience</span>
-            </p>
+        <!-- PWA Install & Open App Section -->
+        <div class="mt-6 space-y-3">
+            <div class="p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-center shadow-lg">
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2.5 text-left">
+                        <div class="w-9 h-9 rounded-xl bg-amber-400 text-slate-900 flex items-center justify-center font-bold text-base shrink-0 shadow-md">
+                            <i class="fa-solid fa-mobile-screen"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-white">Shri Samruddhi PWA App</p>
+                            <p class="text-[10px] text-slate-300">Fast, app-like feel & 1-tap passbook</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <button type="button" data-pwa-action="install" class="pwa-install-btn px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-download"></i>
+                            <span>Install App</span>
+                        </button>
+                        <button type="button" data-pwa-action="open" class="pwa-open-btn px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white font-semibold text-xs border border-white/20 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            <span>Open App</span>
+                        </button>
+                        <span class="pwa-standalone-badge hidden px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-xs font-bold flex items-center gap-1">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>App Mode Active</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center text-[11px] text-slate-400">
+                <span>Available on Android, iPhone & Desktop • Pure App Experience</span>
+            </div>
         </div>
     </div>
 </div>

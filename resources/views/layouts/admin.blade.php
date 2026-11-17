@@ -73,6 +73,19 @@
                 <i class="fa-solid fa-sliders w-5 text-center text-base {{ request()->routeIs('admin.settings.*') ? 'text-white' : 'text-slate-400' }}"></i>
                 <span>Society Settings</span>
             </a>
+
+            <!-- PWA Sidebar Install Tile -->
+            <div class="pt-2 px-1">
+                <button type="button" data-pwa-action="install" class="pwa-install-btn w-full p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 text-left transition flex items-center gap-2.5 group">
+                    <div class="w-7 h-7 rounded-lg bg-amber-400/20 text-amber-400 flex items-center justify-center font-bold text-xs shrink-0 group-hover:scale-105 transition">
+                        <i class="fa-solid fa-download"></i>
+                    </div>
+                    <div class="truncate">
+                        <p class="text-xs font-semibold text-slate-200">Install PWA App</p>
+                        <p class="text-[10px] text-slate-400">Desktop / Mobile shortcut</p>
+                    </div>
+                </button>
+            </div>
         </nav>
 
         <!-- Admin Profile Footer -->
@@ -114,6 +127,20 @@
 
             <!-- Quick Action Badges & Profile -->
             <div class="flex items-center gap-2 md:gap-3">
+                <!-- PWA Action Buttons in Admin Header -->
+                <button type="button" data-pwa-action="install" class="pwa-install-btn inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-800 border border-amber-300 hover:bg-amber-100 text-xs font-bold transition" title="Install Samruddhi PWA App">
+                    <i class="fa-solid fa-download text-amber-600"></i>
+                    <span class="hidden sm:inline">Install App</span>
+                </button>
+                <button type="button" data-pwa-action="open" class="pwa-open-btn inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-medium transition" title="Open App in Fullscreen">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    <span class="hidden sm:inline">Open App</span>
+                </button>
+                <span class="pwa-standalone-badge hidden items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-300">
+                    <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                    <span class="hidden sm:inline">App Mode</span>
+                </span>
+
                 <a href="{{ route('admin.collections.create') }}" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-medium shadow-sm transition">
                     <i class="fa-solid fa-plus-circle"></i>
                     <span>Record Cash</span>
@@ -192,6 +219,18 @@
                 <i class="fa-solid fa-sliders text-slate-400 w-5"></i>
                 <span>Settings</span>
             </a>
+
+            <!-- Mobile Drawer PWA Action -->
+            <div class="pt-2">
+                <button type="button" data-pwa-action="install" class="pwa-install-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold bg-amber-400 text-slate-950 hover:bg-amber-300 transition">
+                    <i class="fa-solid fa-download w-5 text-center"></i>
+                    <span>Install PWA App</span>
+                </button>
+                <button type="button" data-pwa-action="open" class="pwa-open-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-slate-800 text-slate-200 hover:bg-slate-700 transition mt-1.5">
+                    <i class="fa-solid fa-arrow-up-right-from-square w-5 text-center"></i>
+                    <span>Open App</span>
+                </button>
+            </div>
         </nav>
 
         <form action="{{ route('logout') }}" method="POST" class="pt-4 border-t border-slate-800">
