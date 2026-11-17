@@ -59,7 +59,12 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 3. 28 Members Data from Physical Register
+        // 3. Check if members are already seeded
+        if (Member::count() >= 28) {
+            return;
+        }
+
+        // 28 Members Data from Physical Register
         $membersData = [
             ['name' => 'Rajeshbhai K. Sharma',     'mobile' => '9825000001', 'dep_bal' => 36000, 'loan' => 100000, 'inst' => 10000, 'rate' => 1.0, 'rem_loan' => 70000],
             ['name' => 'Sureshbhai M. Patel',      'mobile' => '9825000002', 'dep_bal' => 24000, 'loan' => 50000,  'inst' => 5000,  'rate' => 1.0, 'rem_loan' => 35000],
@@ -97,78 +102,86 @@ class DatabaseSeeder extends Seeder
             $code = 'SSS-' . str_pad($idx + 1, 3, '0', STR_PAD_LEFT);
 
             // Create Member User Login
-            $user = User::create([
-                'name' => $m['name'],
-                'email' => 'member' . ($idx + 1) . '@samruddhi.org',
-                'mobile' => $m['mobile'],
-                'password' => Hash::make('member123'),
-                'role' => 'member',
-                'status' => 'active',
-            ]);
+            $user = User::firstOrCreate(
+                ['email' => 'member' . ($idx + 1) . '@samruddhi.org'],
+                [
+                    'name' => $m['name'],
+                    'mobile' => $m['mobile'],
+                    'password' => Hash::make('member123'),
+                    'role' => 'member',
+                    'status' => 'active',
+                ]
+            );
 
             // Create Member Record
-            $member = Member::create([
-                'member_code' => $code,
-                'user_id' => $user->id,
-                'full_name' => $m['name'],
-                'mobile_number' => $m['mobile'],
-                'alternate_mobile' => '98980' . str_pad($idx + 1, 5, '0', STR_PAD_LEFT),
-                'address' => 'House #' . (10 + $idx) . ', Samruddhi Nagar, Ahmedabad',
-                'joining_date' => Carbon::now()->subMonths(24 - ($idx % 12)),
-                'monthly_deposit_amount' => 1000.00,
-                'initial_deposit_balance' => $m['dep_bal'],
-                'initial_loan_balance' => $m['rem_loan'],
-                'current_deposit_balance' => $m['dep_bal'],
-                'current_loan_balance' => $m['rem_loan'],
-                'status' => 'active',
-            ]);
+            $member = Member::firstOrCreate(
+                ['member_code' => $code],
+                [
+                    'user_id' => $user->id,
+                    'full_name' => $m['name'],
+                    'mobile_number' => $m['mobile'],
+                    'alternate_mobile' => '98980' . str_pad($idx + 1, 5, '0', STR_PAD_LEFT),
+                    'address' => 'House #' . (10 + $idx) . ', Samruddhi Nagar, Ahmedabad',
+                    'joining_date' => Carbon::now()->subMonths(24 - ($idx % 12)),
+                    'monthly_deposit_amount' => 1000.00,
+                    'initial_deposit_balance' => $m['dep_bal'],
+                    'initial_loan_balance' => $m['rem_loan'],
+                    'current_deposit_balance' => $m['dep_bal'],
+                    'current_loan_balance' => $m['rem_loan'],
+                    'status' => 'active',
+                ]
+            );
 
             $user->update(['member_id' => $member->id]);
 
             // Opening deposit ledger entry
-            MemberDeposit::create([
-                'member_id' => $member->id,
-                'transaction_type' => 'opening_balance',
-                'amount' => $m['dep_bal'],
-                'balance_after' => $m['dep_bal'],
-                'transaction_date' => Carbon::now()->startOfYear()->toDateString(),
-                'description' => 'Migrated initial deposit opening balance from manual register',
-            ]);
+            MemberDeposit::firstOrCreate(
+                ['member_id' => $member->id, 'transaction_type' => 'opening_balance'],
+                [
+                    'amount' => $m['dep_bal'],
+                    'balance_after' => $m['dep_bal'],
+                    'transaction_date' => Carbon::now()->startOfYear()->toDateString(),
+                    'description' => 'Migrated initial deposit opening balance from manual register',
+                ]
+            );
 
             // If member has a loan, create loan record & opening transaction
             if ($m['loan'] > 0) {
-                $loan = Loan::create([
-                    'loan_number' => 'LN-2026-' . str_pad($idx + 1, 3, '0', STR_PAD_LEFT),
-                    'member_id' => $member->id,
-                    'application_date' => Carbon::now()->subMonths(5),
-                    'approval_date' => Carbon::now()->subMonths(5),
-                    'loan_amount' => $m['loan'],
-                    'interest_rate' => $m['rate'], // 1% monthly
-                    'interest_calculation_method' => 'reducing_balance',
-                    'monthly_installment' => $m['inst'],
-                    'loan_duration_months' => 12,
-                    'first_installment_date' => Carbon::now()->subMonths(4)->startOfMonth(),
-                    'loan_purpose' => 'Personal / Household Need',
-                    'remarks' => 'Migrated from manual register with remaining principal ₹' . number_format($m['rem_loan'], 2),
-                    'status' => 'active',
-                    'remaining_principal' => $m['rem_loan'],
-                    'total_interest_charged' => 0.00,
-                    'total_interest_paid' => 0.00,
-                    'total_principal_paid' => $m['loan'] - $m['rem_loan'],
-                ]);
+                $loan = Loan::firstOrCreate(
+                    ['loan_number' => 'LN-2026-' . str_pad($idx + 1, 3, '0', STR_PAD_LEFT)],
+                    [
+                        'member_id' => $member->id,
+                        'application_date' => Carbon::now()->subMonths(5),
+                        'approval_date' => Carbon::now()->subMonths(5),
+                        'loan_amount' => $m['loan'],
+                        'interest_rate' => $m['rate'], // 1% monthly
+                        'interest_calculation_method' => 'reducing_balance',
+                        'monthly_installment' => $m['inst'],
+                        'loan_duration_months' => 12,
+                        'first_installment_date' => Carbon::now()->subMonths(4)->startOfMonth(),
+                        'loan_purpose' => 'Personal / Household Need',
+                        'remarks' => 'Migrated from manual register with remaining principal ₹' . number_format($m['rem_loan'], 2),
+                        'status' => 'active',
+                        'remaining_principal' => $m['rem_loan'],
+                        'total_interest_charged' => 0.00,
+                        'total_interest_paid' => 0.00,
+                        'total_principal_paid' => $m['loan'] - $m['rem_loan'],
+                    ]
+                );
 
                 // Loan disbursement ledger record
-                LoanTransaction::create([
-                    'loan_id' => $loan->id,
-                    'member_id' => $member->id,
-                    'transaction_type' => 'opening_balance',
-                    'principal_amount' => $m['loan'],
-                    'interest_amount' => 0.00,
-                    'penalty_amount' => 0.00,
-                    'principal_balance_after' => $m['rem_loan'],
-                    'transaction_date' => Carbon::now()->subMonths(5)->toDateString(),
-                    'remarks' => 'Opening loan balance migration',
-                ]);
+                LoanTransaction::firstOrCreate(
+                    ['loan_id' => $loan->id, 'transaction_type' => 'opening_balance'],
+                    [
+                        'member_id' => $member->id,
+                        'principal_amount' => $m['loan'],
+                        'interest_amount' => 0.00,
+                        'penalty_amount' => 0.00,
+                        'principal_balance_after' => $m['rem_loan'],
+                        'transaction_date' => Carbon::now()->subMonths(5)->toDateString(),
+                        'remarks' => 'Opening loan balance migration',
+                    ]
+                );
             }
 
             $createdMembers[] = $member;
@@ -179,14 +192,15 @@ class DatabaseSeeder extends Seeder
         $currentYear = 2026;
         $regDate = Carbon::create($currentYear, $currentMonth, 1);
 
-        $register = MonthlyRegister::create([
-            'month' => $currentMonth,
-            'year' => $currentYear,
-            'title' => 'November 2026 Society Collection Register',
-            'generated_date' => $regDate->toDateString(),
-            'status' => 'active',
-            'notes' => 'Official monthly collection register for November 2026',
-        ]);
+        $register = MonthlyRegister::firstOrCreate(
+            ['month' => $currentMonth, 'year' => $currentYear],
+            [
+                'title' => 'November 2026 Society Collection Register',
+                'generated_date' => $regDate->toDateString(),
+                'status' => 'active',
+                'notes' => 'Official monthly collection register for November 2026',
+            ]
+        );
 
         $totalExpected = 0;
         $totalCollected = 0;
@@ -199,11 +213,10 @@ class DatabaseSeeder extends Seeder
             $rate = $activeLoan ? $activeLoan->interest_rate : 1.0;
             $interest = $activeLoan ? round(($remBalance * $rate) / 100, 2) : 0;
             $installment = $activeLoan ? $activeLoan->monthly_installment : 0;
-            $penalty = ($idx === 5) ? 100.00 : 0.00; // member 6 has a minor late penalty
+            $penalty = ($idx === 5) ? 100.00 : 0.00;
 
             $totalPayable = round($deposit + $interest + $installment + $penalty, 2);
 
-            // Mark some members as Paid to demonstrate the register replica with colors & status
             $isPaid = ($idx < 12);
             $isPartial = ($idx === 14);
 
@@ -237,29 +250,30 @@ class DatabaseSeeder extends Seeder
                 $payRef = 'CSH-PART-' . rand(1000, 9999);
             }
 
-            $due = MonthlyDue::create([
-                'monthly_register_id' => $register->id,
-                'member_id' => $member->id,
-                'loan_id' => $activeLoan ? $activeLoan->id : null,
-                'monthly_deposit' => $deposit,
-                'loan_amount' => $loanAmt,
-                'interest' => $interest,
-                'monthly_installment' => $installment,
-                'penalty' => $penalty,
-                'total_payable' => $totalPayable,
-                'remaining_loan_balance' => $remBalance,
-                'amount_paid' => $amountPaid,
-                'deposit_paid' => $depositPaid,
-                'interest_paid' => $interestPaid,
-                'installment_paid' => $instPaid,
-                'penalty_paid' => $penPaid,
-                'payment_status' => $status,
-                'payment_date' => $payDate,
-                'payment_mode' => $payMode,
-                'payment_reference' => $payRef,
-            ]);
+            $due = MonthlyDue::firstOrCreate(
+                ['monthly_register_id' => $register->id, 'member_id' => $member->id],
+                [
+                    'loan_id' => $activeLoan ? $activeLoan->id : null,
+                    'monthly_deposit' => $deposit,
+                    'loan_amount' => $loanAmt,
+                    'interest' => $interest,
+                    'monthly_installment' => $installment,
+                    'penalty' => $penalty,
+                    'total_payable' => $totalPayable,
+                    'remaining_loan_balance' => $remBalance,
+                    'amount_paid' => $amountPaid,
+                    'deposit_paid' => $depositPaid,
+                    'interest_paid' => $interestPaid,
+                    'installment_paid' => $instPaid,
+                    'penalty_paid' => $penPaid,
+                    'payment_status' => $status,
+                    'payment_date' => $payDate,
+                    'payment_mode' => $payMode,
+                    'payment_reference' => $payRef,
+                ]
+            );
 
-            if ($amountPaid > 0) {
+            if ($amountPaid > 0 && !Payment::where('member_id', $member->id)->where('monthly_due_id', $due->id)->exists()) {
                 $receipt = 'SSS-202611-' . str_pad($idx + 1, 4, '0', STR_PAD_LEFT);
                 Payment::create([
                     'receipt_number' => $receipt,
@@ -279,45 +293,6 @@ class DatabaseSeeder extends Seeder
                     'recorded_by' => $admin->id,
                     'remarks' => 'Monthly collection payment for November 2026',
                 ]);
-
-                // Update deposit ledger
-                if ($depositPaid > 0) {
-                    $newDepBal = $member->current_deposit_balance + $depositPaid;
-                    MemberDeposit::create([
-                        'member_id' => $member->id,
-                        'transaction_type' => 'monthly_deposit',
-                        'amount' => $depositPaid,
-                        'balance_after' => $newDepBal,
-                        'transaction_date' => $payDate,
-                        'description' => 'November 2026 Monthly Deposit contribution',
-                    ]);
-                    $member->current_deposit_balance = $newDepBal;
-                }
-
-                // Update loan balance & transactions if principal installment paid
-                if ($instPaid > 0 && $activeLoan) {
-                    $newPrincipal = max(0, $activeLoan->remaining_principal - $instPaid);
-                    $activeLoan->remaining_principal = $newPrincipal;
-                    $activeLoan->total_principal_paid += $instPaid;
-                    $activeLoan->total_interest_paid += $interestPaid;
-                    $activeLoan->save();
-
-                    LoanTransaction::create([
-                        'loan_id' => $activeLoan->id,
-                        'member_id' => $member->id,
-                        'transaction_type' => 'principal_repayment',
-                        'principal_amount' => $instPaid,
-                        'interest_amount' => $interestPaid,
-                        'penalty_amount' => $penPaid,
-                        'principal_balance_after' => $newPrincipal,
-                        'transaction_date' => $payDate,
-                        'remarks' => 'Monthly principal repayment & interest paid',
-                    ]);
-
-                    $member->current_loan_balance = $newPrincipal;
-                }
-
-                $member->save();
             }
 
             $totalExpected += $totalPayable;
@@ -326,14 +301,15 @@ class DatabaseSeeder extends Seeder
 
         $register->recalculateTotals();
 
-        // 5. Welcome notification
-        Notification::create([
-            'title' => 'Welcome to Shri Samruddhi Society Portal',
-            'message' => 'The digital management and loan accounting system is now active. Members can view statements and pay dues online.',
-            'type' => 'general',
-            'channel' => 'in_app',
-            'is_read' => false,
-        ]);
+        Notification::firstOrCreate(
+            ['title' => 'Welcome to Shri Samruddhi Society Portal'],
+            [
+                'message' => 'The digital management and loan accounting system is now active. Members can view statements and pay dues online.',
+                'type' => 'general',
+                'channel' => 'in_app',
+                'is_read' => false,
+            ]
+        );
 
         AuditLog::log('system_seeded', 'System initialized with 28 members, initial register, and administrator account', $admin->id);
     }

@@ -97,11 +97,18 @@ Route::prefix('member')->middleware(['web', 'member'])->name('member.')->group(f
     Route::post('/profile', [MemberPortalController::class, 'updateProfile'])->name('update_profile');
 });
 
-// Deployment & Remote Database Initialization Routes
-Route::prefix('deploy')->name('deploy.')->group(function () {
-    Route::get('/', [DeploymentController::class, 'index'])->name('index');
-    Route::match(['get', 'post'], '/migrate-seed', [DeploymentController::class, 'migrateAndSeed'])->name('migrate_seed');
-    Route::match(['get', 'post'], '/migrate', [DeploymentController::class, 'migrate'])->name('migrate');
-    Route::match(['get', 'post'], '/seed', [DeploymentController::class, 'seed'])->name('seed');
-    Route::match(['get', 'post'], '/optimize', [DeploymentController::class, 'optimize'])->name('optimize');
-});
+// Deployment & Remote Database Initialization Routes (No session/CSRF requirement so it runs on fresh DB)
+Route::prefix('deploy')
+    ->withoutMiddleware([
+        \Illuminate\Session\Middleware\StartSession::class,
+        \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+        \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+    ])
+    ->name('deploy.')
+    ->group(function () {
+        Route::get('/', [DeploymentController::class, 'index'])->name('index');
+        Route::match(['get', 'post'], '/migrate-seed', [DeploymentController::class, 'migrateAndSeed'])->name('migrate_seed');
+        Route::match(['get', 'post'], '/migrate', [DeploymentController::class, 'migrate'])->name('migrate');
+        Route::match(['get', 'post'], '/seed', [DeploymentController::class, 'seed'])->name('seed');
+        Route::match(['get', 'post'], '/optimize', [DeploymentController::class, 'optimize'])->name('optimize');
+    });

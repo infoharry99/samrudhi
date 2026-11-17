@@ -2,9 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Member;
-use App\Models\MonthlyRegister;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -19,9 +16,13 @@ class DeploymentController extends Controller
         $validToken = env('DEPLOY_TOKEN', 'samrudhi2026');
         $providedToken = $request->query('token') ?? $request->input('token');
 
-        // Also allow if admin is logged in
-        if (auth()->check() && auth()->user()->isAdmin()) {
-            return true;
+        // Allow if authenticated admin (safely wrapped in try-catch in case session is absent)
+        try {
+            if (auth()->check() && auth()->user()->isAdmin()) {
+                return true;
+            }
+        } catch (\Throwable $e) {
+            // Session not initialized yet
         }
 
         return !empty($providedToken) && hash_equals($validToken, $providedToken);
@@ -38,7 +39,7 @@ class DeploymentController extends Controller
             ], 403);
         }
 
-        $token = $request->query('token') ?? env('DEPLOY_TOKEN', 'samrudhi2026');
+        $token = $request->query('token') ?? $request->input('token') ?? env('DEPLOY_TOKEN', 'samrudhi2026');
 
         // Check DB Status
         $dbConnected = false;
@@ -53,7 +54,7 @@ class DeploymentController extends Controller
             $membersCount = DB::table('members')->count();
             $usersCount = DB::table('users')->count();
             $registersCount = DB::table('monthly_registers')->count();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $dbError = $e->getMessage();
         }
 
@@ -73,9 +74,12 @@ class DeploymentController extends Controller
     public function migrateAndSeed(Request $request)
     {
         if (!$this->verifyToken($request)) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized: Invalid deployment token.'], 403);
+            return response()->view('deploy.unauthorized', [
+                'token' => $request->query('token'),
+            ], 403);
         }
 
+        $token = $request->query('token') ?? $request->input('token') ?? env('DEPLOY_TOKEN', 'samrudhi2026');
         $logs = [];
         $startTime = microtime(true);
 
@@ -92,35 +96,49 @@ class DeploymentController extends Controller
             Artisan::call('optimize:clear');
             $logs['optimize_clear'] = Artisan::output();
 
-            Artisan::call('storage:link');
-            $logs['storage_link'] = Artisan::output();
+            try {
+                Artisan::call('storage:link');
+                $logs['storage_link'] = Artisan::output();
+            } catch (\Throwable $e) {
+                $logs['storage_link'] = 'Storage link: ' . $e->getMessage();
+            }
 
-            $duration = round(microtime(true) - $startTime, 2);
+            $duration = round(microtime(true) - $startTime, 2) . 's';
 
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Database successfully migrated and seeded!',
-                    'duration' => "{$duration}s",
+                    'duration' => $duration,
                     'logs' => $logs,
                 ]);
             }
 
-            return back()->with('deploy_success', [
-                'action' => 'Migrate & Seed',
-                'duration' => "{$duration}s",
+            return view('deploy.result', [
+                'success' => true,
+                'action' => 'Database Migration & Seeding Complete',
+                'duration' => $duration,
                 'logs' => $logs,
+                'token' => $token,
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            $duration = round(microtime(true) - $startTime, 2) . 's';
+            $logs['error'] = $e->getMessage() . "\n" . $e->getFile() . ':' . $e->getLine();
+
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => false,
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
                 ], 500);
             }
 
-            return back()->with('deploy_error', $e->getMessage());
+            return view('deploy.result', [
+                'success' => false,
+                'action' => 'Migration / Seeding Failed',
+                'duration' => $duration,
+                'logs' => $logs,
+                'token' => $token,
+            ]);
         }
     }
 
@@ -130,24 +148,37 @@ class DeploymentController extends Controller
     public function migrate(Request $request)
     {
         if (!$this->verifyToken($request)) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            return response()->view('deploy.unauthorized', ['token' => $request->query('token')], 403);
         }
+
+        $token = $request->query('token') ?? $request->input('token') ?? env('DEPLOY_TOKEN', 'samrudhi2026');
+        $startTime = microtime(true);
 
         try {
             Artisan::call('migrate', ['--force' => true]);
-            $output = Artisan::output();
+            $logs = ['migrate' => Artisan::output()];
+            $duration = round(microtime(true) - $startTime, 2) . 's';
 
             if ($request->wantsJson()) {
-                return response()->json(['success' => true, 'output' => $output]);
+                return response()->json(['success' => true, 'output' => $logs['migrate']]);
             }
 
-            return back()->with('deploy_success', [
-                'action' => 'Migrate Only',
-                'duration' => 'done',
-                'logs' => ['migrate' => $output],
+            return view('deploy.result', [
+                'success' => true,
+                'action' => 'Database Migrations Executed',
+                'duration' => $duration,
+                'logs' => $logs,
+                'token' => $token,
             ]);
-        } catch (\Exception $e) {
-            return back()->with('deploy_error', $e->getMessage());
+        } catch (\Throwable $e) {
+            $duration = round(microtime(true) - $startTime, 2) . 's';
+            return view('deploy.result', [
+                'success' => false,
+                'action' => 'Migration Failed',
+                'duration' => $duration,
+                'logs' => ['error' => $e->getMessage()],
+                'token' => $token,
+            ]);
         }
     }
 
@@ -157,24 +188,37 @@ class DeploymentController extends Controller
     public function seed(Request $request)
     {
         if (!$this->verifyToken($request)) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            return response()->view('deploy.unauthorized', ['token' => $request->query('token')], 403);
         }
+
+        $token = $request->query('token') ?? $request->input('token') ?? env('DEPLOY_TOKEN', 'samrudhi2026');
+        $startTime = microtime(true);
 
         try {
             Artisan::call('db:seed', ['--force' => true]);
-            $output = Artisan::output();
+            $logs = ['seed' => Artisan::output()];
+            $duration = round(microtime(true) - $startTime, 2) . 's';
 
             if ($request->wantsJson()) {
-                return response()->json(['success' => true, 'output' => $output]);
+                return response()->json(['success' => true, 'output' => $logs['seed']]);
             }
 
-            return back()->with('deploy_success', [
-                'action' => 'Seed Only',
-                'duration' => 'done',
-                'logs' => ['seed' => $output],
+            return view('deploy.result', [
+                'success' => true,
+                'action' => 'Database Seeder Executed',
+                'duration' => $duration,
+                'logs' => $logs,
+                'token' => $token,
             ]);
-        } catch (\Exception $e) {
-            return back()->with('deploy_error', $e->getMessage());
+        } catch (\Throwable $e) {
+            $duration = round(microtime(true) - $startTime, 2) . 's';
+            return view('deploy.result', [
+                'success' => false,
+                'action' => 'Seeding Failed',
+                'duration' => $duration,
+                'logs' => ['error' => $e->getMessage()],
+                'token' => $token,
+            ]);
         }
     }
 
@@ -184,8 +228,11 @@ class DeploymentController extends Controller
     public function optimize(Request $request)
     {
         if (!$this->verifyToken($request)) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            return response()->view('deploy.unauthorized', ['token' => $request->query('token')], 403);
         }
+
+        $token = $request->query('token') ?? $request->input('token') ?? env('DEPLOY_TOKEN', 'samrudhi2026');
+        $startTime = microtime(true);
 
         try {
             Artisan::call('optimize:clear');
@@ -200,18 +247,29 @@ class DeploymentController extends Controller
             Artisan::call('view:cache');
             $vwOut = Artisan::output();
 
-            return back()->with('deploy_success', [
-                'action' => 'Optimize & Cache',
-                'duration' => 'done',
+            $duration = round(microtime(true) - $startTime, 2) . 's';
+
+            return view('deploy.result', [
+                'success' => true,
+                'action' => 'Optimize & Cache Completed',
+                'duration' => $duration,
                 'logs' => [
                     'clear' => $clearOut,
                     'config' => $cfgOut,
                     'routes' => $rtOut,
                     'views' => $vwOut,
                 ],
+                'token' => $token,
             ]);
-        } catch (\Exception $e) {
-            return back()->with('deploy_error', $e->getMessage());
+        } catch (\Throwable $e) {
+            $duration = round(microtime(true) - $startTime, 2) . 's';
+            return view('deploy.result', [
+                'success' => false,
+                'action' => 'Optimize Failed',
+                'duration' => $duration,
+                'logs' => ['error' => $e->getMessage()],
+                'token' => $token,
+            ]);
         }
     }
 }
