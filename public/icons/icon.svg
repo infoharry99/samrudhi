@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e40af;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f172a;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d97706;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="100" fill="url(#grad)" />
+  <!-- Inner circular badge -->
+  <circle cx="256" cy="256" r="210" fill="none" stroke="url(#gold)" stroke-width="8" stroke-dasharray="8 6" opacity="0.6"/>
+  <!-- Rupee Symbol & Shield -->
+  <path d="M256 90 L390 150 V260 C390 350 256 420 256 420 C256 420 122 350 122 260 V150 Z" fill="#1e3a8a" stroke="url(#gold)" stroke-width="10"/>
+  <!-- Rupee Symbol inside -->
+  <text x="256" y="295" font-family="Arial, sans-serif" font-size="160" font-weight="900" fill="url(#gold)" text-anchor="middle">₹</text>
+  <!-- Society text below -->
+  <text x="256" y="475" font-family="Arial, sans-serif" font-size="34" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="3">SAMRUDDHI</text>
+</svg>
